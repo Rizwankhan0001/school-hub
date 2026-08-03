@@ -1,4 +1,4 @@
-# EduFee360
+# EduFee360 (school-hub)
 
 School Fee Management SaaS — complete business & functional demo aligned to the BRD.
 
@@ -22,6 +22,8 @@ School Fee Management SaaS — complete business & functional demo aligned to th
 | Support tickets | ✅ |
 | Super Admin multi-tenant | ✅ |
 | Pricing / commercial model | ✅ |
+| Teacher meetings (20-min slots) | ✅ |
+| Teacher profiles, ratings & awards | ✅ |
 
 ## Roles
 
