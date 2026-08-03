@@ -34,7 +34,7 @@ const copy: Record<
   accountant: {
     title: "Accountant",
     reason:
-      "You handle day-to-day money movement — record payments, chase dues, and issue receipts.",
+      "You handle money only — student dues, payments, receipts, payroll for teachers & staff, late fees, and reports.",
     workspace: "Opens the finance workspace",
     color: "bg-[var(--accent-2)]",
   },
@@ -121,8 +121,12 @@ function RoleCard({
           <span className="mt-1.5 block text-sm leading-relaxed text-[var(--muted)]">
             {meta.reason}
           </span>
-          <span className="mt-2 block text-xs text-[var(--muted-2)]">
-            {user.name} · {user.email} · password <span className="font-semibold">demo123</span>
+          <span className="mt-2 block break-all text-xs text-[var(--muted-2)]">
+            {user.name} · {user.email}
+            <span className="mt-1 block sm:mt-0 sm:inline">
+              {" "}
+              · password <span className="font-semibold">demo123</span>
+            </span>
           </span>
           <span className="mt-1 block text-xs font-medium text-[var(--accent)]">{meta.workspace}</span>
         </span>
@@ -133,15 +137,31 @@ function RoleCard({
 }
 
 function LoginInner() {
-  const { login, loginWithCredentials, user, ready, accounts } = useApp();
+  const {
+    login,
+    loginWithCredentials,
+    loginWithPhonePassword,
+    requestParentOtp,
+    loginWithParentOtp,
+    user,
+    ready,
+    accounts,
+  } = useApp();
   const router = useRouter();
   const params = useSearchParams();
   const preferred = params.get("role") as Role | null;
   const [more, setMore] = useState(
     preferred === "super_admin" || preferred === "support_agent",
   );
+  const [authTab, setAuthTab] = useState<"email" | "parent">(
+    preferred === "parent" ? "parent" : "email",
+  );
+  const [parentMethod, setParentMethod] = useState<"password" | "otp">("password");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [phone, setPhone] = useState("+91 98765 43210");
+  const [otp, setOtp] = useState("");
+  const [otpHint, setOtpHint] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const primary = useMemo(() => {
@@ -159,14 +179,54 @@ function LoginInner() {
   }, [accounts]);
 
   useEffect(() => {
+    if (preferred === "parent") setAuthTab("parent");
+  }, [preferred]);
+
+  useEffect(() => {
     if (!ready || !user) return;
     router.replace(routeFor(user));
   }, [ready, user, router]);
 
-  function onSubmit(e: FormEvent) {
+  function onEmailSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
     const result = loginWithCredentials(email, password);
+    if (!result.ok) {
+      setError(result.error);
+      return;
+    }
+    router.replace(routeFor(result.user));
+  }
+
+  function onParentPasswordSubmit(e: FormEvent) {
+    e.preventDefault();
+    setError(null);
+    const result = loginWithPhonePassword(phone, password);
+    if (!result.ok) {
+      setError(result.error);
+      return;
+    }
+    router.replace(routeFor(result.user));
+  }
+
+  function onRequestOtp() {
+    setError(null);
+    setOtpHint(null);
+    const result = requestParentOtp(phone);
+    if (!result.ok) {
+      setError(result.error);
+      return;
+    }
+    setOtpHint(
+      `OTP sent to ${result.maskedPhone}. Demo OTP: ${result.demoOtp}`,
+    );
+    setOtp(result.demoOtp);
+  }
+
+  function onParentOtpSubmit(e: FormEvent) {
+    e.preventDefault();
+    setError(null);
+    const result = loginWithParentOtp(phone, otp);
     if (!result.ok) {
       setError(result.error);
       return;
@@ -189,34 +249,34 @@ function LoginInner() {
           </Link>
           <div>
             <p className="font-[family-name:var(--font-display)] text-4xl font-bold leading-tight tracking-[-0.04em]">
-              Pick the role
+              Parents sign in
               <br />
-              that matches your job.
+              with school mobile.
             </p>
             <p className="mt-4 max-w-sm text-white/55">
-              School admins set up fees. Accountants collect. Parents pay. Platform admins run the
-              SaaS.
+              Use the phone number registered at school — password or one-time OTP. Staff still sign
+              in with email.
             </p>
             <div className="mt-8 space-y-3 text-sm text-white/70">
               <p>
-                <span className="font-semibold text-white">New school?</span> Register your campus
-                and get an admin workspace.
+                <span className="font-semibold text-white">Demo parent:</span> +91 98765 43210 ·
+                password demo123 · OTP 123456
               </p>
               <p>
-                <span className="font-semibold text-white">Parent?</span> Create an account linked
-                to your child’s school.
+                <span className="font-semibold text-white">New parent?</span> Activate portal access
+                with your registered number.
               </p>
             </div>
           </div>
           <div className="flex flex-wrap gap-3">
-            <Link href="/register?type=school">
+            <Link href="/register?type=parent">
               <Button className="bg-[var(--accent)] hover:bg-[var(--accent-hover)]">
-                Register school
+                Activate parent access
               </Button>
             </Link>
-            <Link href="/register?type=parent">
+            <Link href="/register?type=school">
               <Button className="border border-white/15 bg-white/5 text-white hover:bg-white/10">
-                Register as parent
+                Register school
               </Button>
             </Link>
           </div>
@@ -232,57 +292,216 @@ function LoginInner() {
             <ArrowLeft className="h-4 w-4" /> Home
           </Link>
 
-          <h1 className="font-[family-name:var(--font-display)] text-4xl font-bold tracking-[-0.04em]">
+          <h1 className="font-[family-name:var(--font-display)] text-3xl font-bold tracking-[-0.04em] sm:text-4xl">
             Sign in
           </h1>
           <p className="mt-2 text-[var(--muted)]">
-            Use your registered email, or jump in with a demo role below.
+            Parents: registered mobile + password or OTP. School staff: work email + password.
           </p>
 
-          <form onSubmit={onSubmit} className="mt-7 space-y-3 rounded-[1.5rem] border border-[var(--line)] bg-white p-5">
-            <Field label="Email">
-              <Input
-                type="email"
-                autoComplete="email"
-                placeholder="you@school.edu"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </Field>
-            <Field label="Password" hint="Demo accounts use password demo123">
-              <Input
-                type="password"
-                autoComplete="current-password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </Field>
-            {error ? (
-              <p className="rounded-xl bg-[var(--danger-soft)] px-3 py-2 text-sm text-[var(--danger)]">
-                {error}
-              </p>
-            ) : null}
-            <Button type="submit" className="w-full">
-              Sign in <ArrowRight className="h-4 w-4" />
-            </Button>
-          </form>
-
-          <div className="mt-5 flex flex-wrap gap-x-4 gap-y-2 text-sm lg:hidden">
-            <Link href="/register?type=school" className="font-semibold text-[var(--accent)]">
-              Register school
+          <div className="mt-5 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:hidden">
+            <Link
+              href="/register?type=parent"
+              className="rounded-2xl border border-[var(--line)] bg-white px-4 py-3 text-sm font-semibold"
+            >
+              Activate as Parent
             </Link>
-            <Link href="/register?type=parent" className="font-semibold text-[var(--accent)]">
-              Register as parent
+            <Link
+              href="/register?type=school"
+              className="rounded-2xl border border-[var(--line)] bg-white px-4 py-3 text-sm font-semibold"
+            >
+              Register as School
             </Link>
           </div>
 
+          <div className="mt-6 inline-flex rounded-2xl border border-[var(--line)] bg-white p-1">
+            <button
+              type="button"
+              onClick={() => {
+                setAuthTab("parent");
+                setError(null);
+              }}
+              className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${
+                authTab === "parent"
+                  ? "bg-[var(--ink)] text-white"
+                  : "text-[var(--muted)] hover:text-[var(--ink)]"
+              }`}
+            >
+              Parent (mobile)
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setAuthTab("email");
+                setError(null);
+              }}
+              className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${
+                authTab === "email"
+                  ? "bg-[var(--ink)] text-white"
+                  : "text-[var(--muted)] hover:text-[var(--ink)]"
+              }`}
+            >
+              Staff (email)
+            </button>
+          </div>
+
+          {authTab === "parent" ? (
+            <div className="mt-4 rounded-[1.5rem] border border-[var(--line)] bg-white p-5">
+              <div className="mb-4 inline-flex rounded-xl bg-[var(--bg)] p-1">
+                <button
+                  type="button"
+                  onClick={() => setParentMethod("password")}
+                  className={`rounded-lg px-3 py-1.5 text-xs font-bold transition ${
+                    parentMethod === "password"
+                      ? "bg-white text-[var(--ink)] shadow-sm"
+                      : "text-[var(--muted)]"
+                  }`}
+                >
+                  Password
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setParentMethod("otp")}
+                  className={`rounded-lg px-3 py-1.5 text-xs font-bold transition ${
+                    parentMethod === "otp"
+                      ? "bg-white text-[var(--ink)] shadow-sm"
+                      : "text-[var(--muted)]"
+                  }`}
+                >
+                  OTP
+                </button>
+              </div>
+
+              {parentMethod === "password" ? (
+                <form onSubmit={onParentPasswordSubmit} className="space-y-3">
+                  <Field
+                    label="Registered mobile"
+                    hint="Must match the number on your child’s school record"
+                  >
+                    <Input
+                      type="tel"
+                      autoComplete="tel"
+                      placeholder="+91 98xxx xxxxx"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      required
+                    />
+                  </Field>
+                  <Field label="Password" hint="Demo: demo123">
+                    <Input
+                      type="password"
+                      autoComplete="current-password"
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                    />
+                  </Field>
+                  {error ? (
+                    <p className="rounded-xl bg-[var(--danger-soft)] px-3 py-2 text-sm text-[var(--danger)]">
+                      {error}
+                    </p>
+                  ) : null}
+                  <Button type="submit" className="w-full">
+                    Sign in as parent <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </form>
+              ) : (
+                <form onSubmit={onParentOtpSubmit} className="space-y-3">
+                  <Field
+                    label="Registered mobile"
+                    hint="OTP works only for numbers already in school records"
+                  >
+                    <Input
+                      type="tel"
+                      autoComplete="tel"
+                      placeholder="+91 98xxx xxxxx"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      required
+                    />
+                  </Field>
+                  <div className="flex flex-wrap gap-2">
+                    <Button type="button" variant="soft" onClick={onRequestOtp}>
+                      Send OTP
+                    </Button>
+                  </div>
+                  {otpHint ? (
+                    <p className="rounded-xl bg-[var(--accent-soft)] px-3 py-2 text-sm text-[var(--accent-hover)]">
+                      {otpHint}
+                    </p>
+                  ) : null}
+                  <Field label="Enter OTP" hint="Demo OTP is 123456">
+                    <Input
+                      inputMode="numeric"
+                      autoComplete="one-time-code"
+                      placeholder="6-digit OTP"
+                      value={otp}
+                      onChange={(e) => setOtp(e.target.value)}
+                      required
+                    />
+                  </Field>
+                  {error ? (
+                    <p className="rounded-xl bg-[var(--danger-soft)] px-3 py-2 text-sm text-[var(--danger)]">
+                      {error}
+                    </p>
+                  ) : null}
+                  <Button type="submit" className="w-full">
+                    Verify OTP &amp; sign in <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </form>
+              )}
+
+              <p className="mt-4 text-center text-sm text-[var(--muted)]">
+                First time?{" "}
+                <Link
+                  href="/register?type=parent"
+                  className="font-semibold text-[var(--accent)]"
+                >
+                  Activate with school mobile
+                </Link>
+              </p>
+            </div>
+          ) : (
+            <form
+              onSubmit={onEmailSubmit}
+              className="mt-4 space-y-3 rounded-[1.5rem] border border-[var(--line)] bg-white p-5"
+            >
+              <Field label="Work email">
+                <Input
+                  type="email"
+                  autoComplete="email"
+                  placeholder="you@school.edu"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </Field>
+              <Field label="Password" hint="Demo accounts use password demo123">
+                <Input
+                  type="password"
+                  autoComplete="current-password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+              </Field>
+              {error ? (
+                <p className="rounded-xl bg-[var(--danger-soft)] px-3 py-2 text-sm text-[var(--danger)]">
+                  {error}
+                </p>
+              ) : null}
+              <Button type="submit" className="w-full">
+                Sign in <ArrowRight className="h-4 w-4" />
+              </Button>
+            </form>
+          )}
+
           <div className="mt-10">
-            <p className="text-sm font-semibold text-[var(--ink-2)]">Why each role?</p>
+            <p className="text-sm font-semibold text-[var(--ink-2)]">Or try a demo role</p>
             <p className="mt-1 text-sm text-[var(--muted)]">
-              Click a card to explore that workspace instantly.
+              No signup needed — click a role to explore that workspace.
             </p>
             <div className="mt-4 space-y-3">
               {primary.map((u) => (

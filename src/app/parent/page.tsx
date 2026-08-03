@@ -59,6 +59,9 @@ export default function ParentDashboard() {
         description="Here’s what you owe, school reminders, and any AI video messages from campus."
         actions={
           <div className="flex flex-wrap gap-2">
+            <Link href="/parent/scholarships">
+              <Button variant="soft">Scholarships</Button>
+            </Link>
             <Link href="/parent/meetings">
               <Button variant="soft">Meet a teacher</Button>
             </Link>

@@ -2,7 +2,13 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowRight } from "lucide-react";
+import {
+  ArrowRight,
+  Building2,
+  LogIn,
+  Shield,
+  Users,
+} from "lucide-react";
 import { SiteNav } from "@/components/site-nav";
 
 const steps = [
@@ -20,6 +26,39 @@ const steps = [
     n: "03",
     t: "Remind with care",
     d: "Gentle random nudges and AI video calls help recover dues without pressure.",
+  },
+];
+
+const paths = [
+  {
+    href: "/register?type=school",
+    icon: Building2,
+    title: "Register as School",
+    audience: "School admin / campus",
+    blurb:
+      "Create your school account. You’ll get a School Admin workspace to manage students, fees, dues, and receipts.",
+    cta: "Create school account",
+    tone: "accent" as const,
+  },
+  {
+    href: "/register?type=parent",
+    icon: Users,
+    title: "Register as Parent",
+    audience: "Parent / guardian",
+    blurb:
+      "Create a parent account linked to your child’s school. Pay fees, download receipts, and book teacher meetings.",
+    cta: "Create parent account",
+    tone: "ink" as const,
+  },
+  {
+    href: "/login",
+    icon: LogIn,
+    title: "Already registered? Sign in",
+    audience: "School admin · Parent · Accountant · Platform",
+    blurb:
+      "Use your email and password. Demo roles are also available if you just want to explore.",
+    cta: "Go to sign in",
+    tone: "soft" as const,
   },
 ];
 
@@ -42,12 +81,6 @@ export default function LandingPage() {
             animate={{ y: [0, -24, 0] }}
             transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
           />
-          <motion.div
-            aria-hidden
-            className="pointer-events-none absolute bottom-[18%] right-[28%] h-28 w-28 rounded-full border border-white/10"
-            animate={{ rotate: [0, 12, 0], opacity: [0.25, 0.45, 0.25] }}
-            transition={{ duration: 14, repeat: Infinity, ease: "easeInOut" }}
-          />
 
           <div className="relative z-10 mx-auto w-full max-w-6xl px-6 pb-16 pt-32 sm:pb-20 sm:pt-36">
             <motion.div
@@ -59,23 +92,23 @@ export default function LandingPage() {
               <p className="font-[family-name:var(--font-display)] text-[clamp(3.4rem,12vw,7.5rem)] font-extrabold leading-[0.88] tracking-[-0.055em] text-white">
                 EduFee360
               </p>
-              <h1 className="mt-8 max-w-[22rem] text-[1.55rem] font-medium leading-[1.25] tracking-[-0.025em] text-white sm:max-w-xl sm:text-[2rem]">
+              <h1 className="mt-8 max-w-xl text-[1.55rem] font-medium leading-[1.25] tracking-[-0.025em] text-white sm:text-[2rem]">
                 Fee collection that feels effortless.
               </h1>
-              <p className="mt-5 max-w-md text-[1.02rem] leading-relaxed text-white/58 sm:text-lg">
-                Schools set plans. Parents pay clearly. Reminders stay gentle.
+              <p className="mt-5 max-w-lg text-[1.02rem] leading-relaxed text-white/58 sm:text-lg">
+                New here? Register as a school or parent. Already with us? Sign in below.
               </p>
-              <div className="mt-10 flex flex-wrap items-center gap-3">
-                <Link
-                  href="/register?type=school"
-                  className="inline-flex h-12 items-center gap-2 rounded-2xl bg-[var(--accent)] px-6 text-[0.95rem] font-semibold text-white transition hover:bg-[var(--accent-hover)]"
+              <div className="mt-10 flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
+                <a
+                  href="#get-started"
+                  className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[var(--accent)] px-6 text-[0.95rem] font-semibold text-white transition hover:bg-[var(--accent-hover)] sm:w-auto"
                 >
-                  Register your school
+                  Get started
                   <ArrowRight className="h-4 w-4" />
-                </Link>
+                </a>
                 <Link
                   href="/login"
-                  className="inline-flex h-12 items-center rounded-2xl border border-white/15 bg-white/[0.04] px-6 text-[0.95rem] font-semibold text-white transition hover:bg-white/10"
+                  className="inline-flex h-12 w-full items-center justify-center rounded-2xl border border-white/15 bg-white/[0.04] px-6 text-[0.95rem] font-semibold text-white transition hover:bg-white/10 sm:w-auto"
                 >
                   Sign in
                 </Link>
@@ -84,7 +117,91 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <section className="mx-auto max-w-6xl px-6 py-24 sm:py-28">
+        <section id="get-started" className="scroll-mt-24 mx-auto max-w-6xl px-6 py-20 sm:py-24">
+          <div className="max-w-2xl">
+            <p className="plain-label text-[var(--accent)]">New customer?</p>
+            <h2 className="mt-3 font-[family-name:var(--font-display)] text-4xl font-bold leading-[1.05] tracking-[-0.045em] sm:text-5xl">
+              Choose how you want to join
+            </h2>
+            <p className="mt-4 text-[1.05rem] leading-relaxed text-[var(--muted)]">
+              Pick the option that matches you. Registration is for schools and parents. Staff
+              roles like accountant or platform admin sign in with an existing account.
+            </p>
+          </div>
+
+          <div className="mt-12 grid gap-5 lg:grid-cols-3">
+            {paths.map((path, i) => (
+              <motion.div
+                key={path.href}
+                initial={{ opacity: 0, y: 14 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.06 }}
+              >
+                <Link
+                  href={path.href}
+                  className={`group flex h-full flex-col rounded-[1.6rem] border p-6 transition hover:-translate-y-0.5 sm:p-7 ${
+                    path.tone === "accent"
+                      ? "border-[var(--accent)]/35 bg-white shadow-[0_22px_50px_-34px_rgba(0,166,126,0.55)] hover:border-[var(--accent)]"
+                      : path.tone === "ink"
+                        ? "border-[var(--line)] bg-white hover:border-[var(--ink)]/25"
+                        : "border-[var(--line)] bg-[var(--surface-muted)] hover:border-[var(--line-strong)]"
+                  }`}
+                >
+                  <span
+                    className={`grid h-12 w-12 place-items-center rounded-2xl text-white ${
+                      path.tone === "accent"
+                        ? "bg-[var(--accent)]"
+                        : path.tone === "ink"
+                          ? "bg-[var(--ink)]"
+                          : "bg-[var(--ink-2)]"
+                    }`}
+                  >
+                    <path.icon className="h-5 w-5" />
+                  </span>
+                  <p className="mt-5 text-xs font-bold uppercase tracking-[0.08em] text-[var(--muted)]">
+                    {path.audience}
+                  </p>
+                  <h3 className="mt-2 text-xl font-bold tracking-[-0.03em]">{path.title}</h3>
+                  <p className="mt-3 flex-1 text-sm leading-relaxed text-[var(--muted)]">
+                    {path.blurb}
+                  </p>
+                  <span className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-[var(--accent)] transition group-hover:gap-2.5">
+                    {path.cta}
+                    <ArrowRight className="h-4 w-4" />
+                  </span>
+                </Link>
+              </motion.div>
+            ))}
+          </div>
+
+          <div className="mt-8 rounded-[1.4rem] border border-[var(--line)] bg-white/70 px-5 py-5 sm:px-6">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-start gap-3">
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[var(--accent-2-soft)] text-[var(--accent-2)]">
+                  <Shield className="h-4 w-4" />
+                </span>
+                <div>
+                  <p className="font-semibold tracking-[-0.02em]">
+                    Accountant, support, or platform admin?
+                  </p>
+                  <p className="mt-1 text-sm text-[var(--muted)]">
+                    Those roles don’t self-register. Sign in with your school/platform credentials,
+                    or try the demo role cards on the login page.
+                  </p>
+                </div>
+              </div>
+              <Link
+                href="/login"
+                className="inline-flex h-11 shrink-0 items-center justify-center rounded-2xl bg-[var(--ink)] px-5 text-sm font-semibold text-white transition hover:bg-[var(--ink-2)]"
+              >
+                Open sign in
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        <section className="mx-auto max-w-6xl px-6 pb-24 sm:pb-28">
           <div className="grid gap-10 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:items-end lg:gap-16">
             <div>
               <p className="plain-label text-[var(--accent)]">Simple by design</p>
@@ -119,56 +236,27 @@ export default function LandingPage() {
             ))}
           </div>
         </section>
-
-        <section className="px-6 pb-24 sm:pb-28">
-          <div className="relative mx-auto max-w-6xl overflow-hidden rounded-[2rem] bg-[var(--ink)] px-8 py-14 text-white sm:px-12 sm:py-16">
-            <div
-              aria-hidden
-              className="pointer-events-none absolute -right-16 top-0 h-56 w-56 rounded-full bg-[rgba(0,166,126,0.28)] blur-3xl"
-            />
-            <div
-              aria-hidden
-              className="pointer-events-none absolute -left-10 bottom-0 h-40 w-40 rounded-full bg-[rgba(36,91,255,0.2)] blur-3xl"
-            />
-            <div className="relative grid gap-10 lg:grid-cols-[1.2fr_auto] lg:items-center lg:gap-16">
-              <div className="max-w-xl">
-                <p className="text-xs font-bold uppercase tracking-[0.12em] text-white/40">
-                  Start in minutes
-                </p>
-                <h2 className="mt-3 font-[family-name:var(--font-display)] text-3xl font-bold leading-tight tracking-[-0.04em] sm:text-4xl">
-                  The right workspace for every role
-                </h2>
-                <p className="mt-4 max-w-md text-[1.02rem] leading-relaxed text-white/55">
-                  School admin, accountant, parent, or platform — each login opens a clear job, not
-                  a crowded dashboard.
-                </p>
-              </div>
-              <div className="flex flex-wrap gap-3 lg:justify-end">
-                <Link
-                  href="/register"
-                  className="inline-flex h-12 items-center gap-2 rounded-2xl bg-[var(--accent)] px-6 text-sm font-semibold text-white transition hover:bg-[var(--accent-hover)]"
-                >
-                  Register
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-                <Link
-                  href="/login"
-                  className="inline-flex h-12 items-center rounded-2xl border border-white/15 bg-white/[0.04] px-6 text-sm font-semibold text-white transition hover:bg-white/10"
-                >
-                  Sign in
-                </Link>
-              </div>
-            </div>
-          </div>
-        </section>
       </main>
 
       <footer className="border-t border-[var(--line)]">
-        <div className="mx-auto flex max-w-6xl flex-col gap-3 px-6 py-8 sm:flex-row sm:items-center sm:justify-between">
-          <p className="font-[family-name:var(--font-display)] text-sm font-bold tracking-[-0.02em]">
-            EduFee360
-          </p>
-          <p className="text-sm text-[var(--muted)]">School fee management, made clear</p>
+        <div className="mx-auto flex max-w-6xl flex-col gap-4 px-6 py-8 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="font-[family-name:var(--font-display)] text-sm font-bold tracking-[-0.02em]">
+              EduFee360
+            </p>
+            <p className="mt-1 text-sm text-[var(--muted)]">School fee management, made clear</p>
+          </div>
+          <div className="flex flex-wrap gap-4 text-sm font-semibold">
+            <Link href="/register?type=school" className="text-[var(--ink)] hover:text-[var(--accent)]">
+              Register school
+            </Link>
+            <Link href="/register?type=parent" className="text-[var(--ink)] hover:text-[var(--accent)]">
+              Register parent
+            </Link>
+            <Link href="/login" className="text-[var(--ink)] hover:text-[var(--accent)]">
+              Sign in
+            </Link>
+          </div>
         </div>
       </footer>
     </div>

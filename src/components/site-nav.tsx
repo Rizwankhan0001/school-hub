@@ -8,9 +8,10 @@ import { useState } from "react";
 import { cn } from "@/lib/format";
 
 const links = [
+  { href: "/#get-started", label: "Get started" },
   { href: "/pricing", label: "Pricing" },
-  { href: "/register?type=school", label: "For schools" },
-  { href: "/register?type=parent", label: "For parents" },
+  { href: "/register?type=school", label: "Register school" },
+  { href: "/register?type=parent", label: "Register parent" },
 ];
 
 export function SiteNav({
@@ -64,18 +65,18 @@ export function SiteNav({
             </span>
           </Link>
 
-          <nav className="hidden items-center gap-1 md:flex">
+          <nav className="hidden items-center gap-1 lg:flex">
             {links.map((item) => {
               const active =
-                pathname === item.href ||
-                (item.href.startsWith("/register") && pathname === "/register") ||
-                (item.href === "/pricing" && pathname === "/pricing");
+                (item.href === "/pricing" && pathname === "/pricing") ||
+                (item.href.includes("type=school") && pathname === "/register") ||
+                (item.href.includes("type=parent") && pathname === "/register");
               return (
                 <Link
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    "relative rounded-xl px-3.5 py-2 text-sm font-semibold transition",
+                    "relative rounded-xl px-3 py-2 text-sm font-semibold transition",
                     dark
                       ? active
                         ? "bg-white/12 text-white"
@@ -91,13 +92,13 @@ export function SiteNav({
             })}
           </nav>
 
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
             <Link
               href="/login"
               className={cn(
-                "hidden h-10 items-center rounded-2xl px-4 text-sm font-semibold transition sm:inline-flex",
+                "inline-flex h-10 items-center rounded-2xl px-3 text-sm font-semibold transition sm:px-4",
                 dark
-                  ? "text-white/75 hover:bg-white/10 hover:text-white"
+                  ? "text-white/80 hover:bg-white/10 hover:text-white"
                   : "text-[var(--muted)] hover:bg-black/[0.04] hover:text-[var(--ink)]",
               )}
             >
@@ -106,19 +107,20 @@ export function SiteNav({
             <Link
               href="/register"
               className={cn(
-                "inline-flex h-10 items-center gap-1.5 rounded-2xl px-4 text-sm font-semibold transition",
+                "inline-flex h-10 items-center gap-1.5 rounded-2xl px-3 text-sm font-semibold transition sm:px-4",
                 dark
                   ? "bg-white text-[var(--ink)] hover:bg-white/90"
                   : "bg-[var(--accent)] text-white hover:bg-[var(--accent-hover)]",
               )}
             >
-              Get started
-              <ArrowRight className="h-3.5 w-3.5" />
+              <span className="sm:hidden">Register</span>
+              <span className="hidden sm:inline">Register</span>
+              <ArrowRight className="hidden h-3.5 w-3.5 sm:block" />
             </Link>
             <button
               type="button"
               className={cn(
-                "grid h-10 w-10 place-items-center rounded-xl md:hidden",
+                "grid h-10 w-10 place-items-center rounded-xl lg:hidden",
                 dark ? "bg-white/10 text-white" : "border border-[var(--line)] bg-white",
               )}
               onClick={() => setOpen(true)}
@@ -131,7 +133,7 @@ export function SiteNav({
       </motion.div>
 
       {open ? (
-        <div className="fixed inset-0 z-50 md:hidden">
+        <div className="fixed inset-0 z-50 lg:hidden">
           <button
             type="button"
             className="absolute inset-0 bg-black/45 backdrop-blur-sm"
@@ -162,19 +164,36 @@ export function SiteNav({
                 <X className="h-4 w-4" />
               </button>
             </div>
-            <div className="space-y-1">
-              {links.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setOpen(false)}
-                  className="block rounded-2xl px-4 py-3.5 text-base font-semibold text-white/80 hover:bg-white/8 hover:text-white"
-                >
-                  {item.label}
-                </Link>
-              ))}
+
+            <p className="px-1 text-xs font-bold uppercase tracking-[0.08em] text-white/40">
+              New customer
+            </p>
+            <div className="mt-2 space-y-1">
+              <Link
+                href="/register?type=school"
+                onClick={() => setOpen(false)}
+                className="block rounded-2xl px-4 py-3.5 text-base font-semibold hover:bg-white/8"
+              >
+                Register as School
+              </Link>
+              <Link
+                href="/register?type=parent"
+                onClick={() => setOpen(false)}
+                className="block rounded-2xl px-4 py-3.5 text-base font-semibold hover:bg-white/8"
+              >
+                Register as Parent
+              </Link>
+              <Link
+                href="/pricing"
+                onClick={() => setOpen(false)}
+                className="block rounded-2xl px-4 py-3.5 text-base font-semibold text-white/75 hover:bg-white/8 hover:text-white"
+              >
+                Pricing
+              </Link>
             </div>
+
             <div className="mt-auto space-y-2 border-t border-white/10 pt-5">
+              <p className="px-1 text-xs text-white/45">Already have an account?</p>
               <Link
                 href="/login"
                 onClick={() => setOpen(false)}
@@ -187,7 +206,7 @@ export function SiteNav({
                 onClick={() => setOpen(false)}
                 className="flex h-11 items-center justify-center gap-2 rounded-2xl bg-[var(--accent)] text-sm font-semibold"
               >
-                Get started <ArrowRight className="h-4 w-4" />
+                Create account <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
           </motion.div>

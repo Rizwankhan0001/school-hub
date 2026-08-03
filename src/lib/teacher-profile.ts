@@ -91,11 +91,19 @@ export function buildTeacherProfileHtml(input: TeacherProfileDocumentInput): str
       <div class="meta">
         <div><p class="label">Qualification</p><p class="value">${escapeHtml(teacher.highestQualification)}</p></div>
         <div><p class="label">Experience</p><p class="value">${teacher.yearsExperience} years · joined ${formatDate(teacher.joinedOn)}</p></div>
+        <div><p class="label">Department</p><p class="value">${escapeHtml(teacher.department ?? "—")}</p></div>
+        <div><p class="label">Languages</p><p class="value">${escapeHtml((teacher.languagesSpoken ?? []).join(", ") || "—")}</p></div>
         <div><p class="label">Contact</p><p class="value">${escapeHtml(teacher.email)} · ${escapeHtml(teacher.phone)}</p></div>
         <div><p class="label">Room</p><p class="value">${escapeHtml(teacher.room)}</p></div>
         <div><p class="label">School rating</p><p class="value">${ratingCount ? starsText(averageRating) + ` · ${ratingCount} ratings` : "Not rated yet"}</p></div>
+        <div><p class="label">Classes</p><p class="value">${escapeHtml(teacher.classes.join(", "))}</p></div>
       </div>
       <p style="margin:20px 0 0;line-height:1.55;color:#334155;">${escapeHtml(teacher.bio)}</p>
+      ${
+        teacher.highlights?.length
+          ? `<p style="margin:14px 0 0;color:#0f766e;font-size:14px;"><strong>Highlights:</strong> ${escapeHtml(teacher.highlights.join(" · "))}</p>`
+          : ""
+      }
 
       <h2>Class-wise teaching</h2>
       <table>

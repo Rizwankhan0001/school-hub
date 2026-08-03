@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
+  Award,
   Bell,
   CalendarClock,
   CreditCard,
@@ -22,6 +23,7 @@ import { Button } from "@/components/ui";
 const nav = [
   { href: "/parent", label: "Home", icon: Home },
   { href: "/parent/pay", label: "Pay now", icon: CreditCard },
+  { href: "/parent/scholarships", label: "Scholarships", icon: Award },
   { href: "/parent/meetings", label: "Meetings", icon: CalendarClock },
   { href: "/parent/receipts", label: "Receipts", icon: Receipt },
   { href: "/parent/history", label: "History", icon: History },
@@ -32,8 +34,8 @@ const nav = [
 const mobileNav = [
   { href: "/parent", label: "Home", icon: Home },
   { href: "/parent/pay", label: "Pay", icon: CreditCard },
+  { href: "/parent/scholarships", label: "Aid", icon: Award },
   { href: "/parent/meetings", label: "Meet", icon: CalendarClock },
-  { href: "/parent/receipts", label: "Receipts", icon: Receipt },
 ];
 
 function initials(name: string) {
@@ -68,18 +70,18 @@ export function ParentShell({ children }: { children: React.ReactNode }) {
           <div className="flex min-w-0 items-center gap-3">
             <button
               type="button"
-              className="grid h-10 w-10 place-items-center rounded-xl border border-[var(--line)] bg-white shadow-sm sm:hidden"
+              className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-[var(--line)] bg-white shadow-sm lg:hidden"
               onClick={() => setOpen(true)}
               aria-label="Open menu"
             >
               <Menu className="h-4 w-4" />
             </button>
             <Link href="/parent" className="flex min-w-0 items-center gap-2.5">
-              <span className="brand-mark grid h-10 w-10 shrink-0 place-items-center rounded-xl text-sm font-bold text-white">
+              <span className="brand-mark grid h-9 w-9 shrink-0 place-items-center rounded-xl text-sm font-bold text-white sm:h-10 sm:w-10">
                 E3
               </span>
               <span className="min-w-0">
-                <span className="block font-[family-name:var(--font-display)] text-lg font-bold leading-none tracking-[-0.03em]">
+                <span className="block truncate font-[family-name:var(--font-display)] text-base font-bold leading-none tracking-[-0.03em] sm:text-lg">
                   EduFee360
                 </span>
                 <span className="mt-1 block truncate text-xs text-[var(--muted)]">
@@ -127,7 +129,7 @@ export function ParentShell({ children }: { children: React.ReactNode }) {
 
       <main className="mx-auto max-w-5xl px-4 py-6 sm:px-6">{children}</main>
 
-      <nav className="fixed inset-x-0 bottom-3 z-20 px-3 md:hidden">
+      <nav className="fixed inset-x-0 bottom-3 z-20 px-3 pb-[env(safe-area-inset-bottom)] md:hidden">
         <div className="mobile-dock mx-auto grid max-w-lg grid-cols-4 gap-1 rounded-[1.35rem] p-1.5">
           {mobileNav.map((item) => {
             const active = pathname === item.href;
@@ -136,7 +138,7 @@ export function ParentShell({ children }: { children: React.ReactNode }) {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "flex flex-col items-center gap-1 rounded-[1.1rem] px-2 py-2.5 text-[0.68rem] font-bold transition",
+                  "flex flex-col items-center gap-1 rounded-[1.1rem] px-1 py-2.5 text-[0.65rem] font-bold transition sm:px-2 sm:text-[0.68rem]",
                   active
                     ? "bg-[var(--ink)] text-white shadow-[0_10px_20px_-12px_rgba(10,12,16,0.55)]"
                     : "text-[var(--muted)]",
@@ -151,14 +153,14 @@ export function ParentShell({ children }: { children: React.ReactNode }) {
       </nav>
 
       {open ? (
-        <div className="fixed inset-0 z-40 sm:hidden">
+        <div className="fixed inset-0 z-40 lg:hidden">
           <button
             type="button"
             className="absolute inset-0 bg-black/40 backdrop-blur-[2px]"
             onClick={() => setOpen(false)}
             aria-label="Close menu"
           />
-          <div className="absolute inset-y-0 left-0 flex w-[290px] flex-col bg-white p-4 shadow-2xl">
+          <div className="absolute inset-y-0 left-0 flex w-[min(100%,290px)] flex-col bg-white p-4 shadow-2xl">
             <div className="mb-6 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <span className="brand-mark grid h-9 w-9 place-items-center rounded-xl text-xs font-bold text-white">
@@ -177,7 +179,7 @@ export function ParentShell({ children }: { children: React.ReactNode }) {
                 <X className="h-4 w-4" />
               </button>
             </div>
-            <div className="space-y-1">
+            <div className="space-y-1 overflow-y-auto">
               {nav.map((item) => {
                 const active = pathname === item.href;
                 return (
@@ -197,6 +199,19 @@ export function ParentShell({ children }: { children: React.ReactNode }) {
                   </Link>
                 );
               })}
+            </div>
+            <div className="mt-auto border-t border-[var(--line)] pt-4">
+              <Button
+                variant="soft"
+                className="w-full"
+                onClick={() => {
+                  setOpen(false);
+                  logout();
+                  router.push("/");
+                }}
+              >
+                <LogOut className="h-4 w-4" /> Sign out
+              </Button>
             </div>
           </div>
         </div>

@@ -20,6 +20,23 @@ export type FeeType =
 
 export type InstallmentPlan = "monthly" | "quarterly" | "half_yearly" | "annual";
 
+export type FeePaymentCode = "annual_full" | "half_yearly" | "quarterly" | "monthly";
+
+export interface FeePaymentOption {
+  id: string;
+  code: FeePaymentCode;
+  name: string;
+  tagline: string;
+  description: string;
+  installments: number;
+  /** Percent off annual structure total */
+  discountPercent: number;
+  /** Optional convenience fee on the payable total */
+  surchargePercent: number;
+  highlight?: boolean;
+  howItWorks: string[];
+}
+
 export type DueStatus = "upcoming" | "due_today" | "overdue" | "paid" | "partial";
 
 export type PaymentMethod = "upi" | "card" | "netbanking" | "wallet" | "cash";
@@ -33,9 +50,48 @@ export type ScholarshipType =
   | "Sports Quota"
   | "Staff Child"
   | "Need Based"
-  | "Government Sponsored";
+  | "Government Sponsored"
+  | "Scholarship Test";
 
 export type ScholarshipStatus = "pending" | "approved" | "rejected" | "expired";
+
+export type ScholarshipBasis =
+  | "percentage_marks"
+  | "scholarship_test"
+  | "need_based_quota"
+  | "sports_achievement"
+  | "staff_child"
+  | "government_quota";
+
+export type ScholarshipAwardMode = "percentage" | "fixed" | "slab";
+
+export interface ScholarshipAwardSlab {
+  label: string;
+  minScore: number;
+  maxScore: number;
+  mode: "percentage" | "fixed";
+  value: number;
+}
+
+export interface ScholarshipProgram {
+  id: string;
+  name: string;
+  type: ScholarshipType;
+  basis: ScholarshipBasis;
+  summary: string;
+  conditions: string[];
+  awardMode: ScholarshipAwardMode;
+  /** Used when awardMode is percentage or fixed */
+  awardValue: number;
+  awardSlabs?: ScholarshipAwardSlab[];
+  covers: string;
+  maxAwardLabel: string;
+  maxSeats: number;
+  seatsFilled: number;
+  academicSession: string;
+  documentsRequired: string[];
+  active: boolean;
+}
 
 export type FineMode = "fixed" | "daily" | "percentage";
 
@@ -78,10 +134,21 @@ export interface Parent {
 
 export interface Student {
   id: string;
+  /** Unique student ID shown in school records (same as admission number in demo) */
   admissionNo: string;
   name: string;
   className: string;
   section: string;
+  rollNo?: string;
+  gender?: "Male" | "Female" | "Other";
+  dateOfBirth?: string;
+  bloodGroup?: string;
+  address?: string;
+  house?: string;
+  dateOfJoining?: string;
+  avatarInitials?: string;
+  emergencyContact?: string;
+  remarks?: string;
   parentId: string;
   parentName: string;
   mobile: string;
@@ -153,16 +220,31 @@ export interface CommunicationLog {
   status: "sent" | "failed" | "queued";
 }
 
+export type ScholarshipApplicant = "admin" | "parent";
+
+export type SportsAchievementLevel = "district" | "state" | "national";
+
 export interface Scholarship {
   id: string;
   studentId: string;
+  programId?: string;
   type: ScholarshipType;
+  basis?: ScholarshipBasis;
   mode: "percentage" | "fixed";
   value: number;
+  qualifyingScore?: number;
+  annualIncome?: number;
+  sportsLevel?: SportsAchievementLevel;
+  staffChildConfirmed?: boolean;
+  governmentSanctionConfirmed?: boolean;
+  documentsConfirmed?: boolean;
+  appliedBy?: ScholarshipApplicant;
   effectiveFrom: string;
   expiresOn: string;
   status: ScholarshipStatus;
   notes: string;
+  reviewNotes?: string;
+  autoReviewedAt?: string;
 }
 
 export interface FineRule {
@@ -231,9 +313,20 @@ export type MeetingTopic =
   | "Exam prep"
   | "Other";
 
-export type MeetingMode = "in_person" | "video" | "phone";
+export type MeetingMode = "in_person" | "video" | "phone" | "chat";
 
 export type MeetingBookingStatus = "booked" | "completed" | "cancelled";
+
+export type MeetingSessionStatus = "idle" | "active" | "ended";
+
+export interface MeetingChatMessage {
+  id: string;
+  meetingId: string;
+  senderRole: "parent" | "teacher";
+  senderName: string;
+  text: string;
+  sentAt: string;
+}
 
 export interface TeacherClassAssignment {
   className: string;
@@ -255,6 +348,7 @@ export interface Teacher {
   name: string;
   subject: string;
   specialty: string;
+  department: "Primary" | "Middle" | "Senior" | "Specialist";
   classes: string[];
   classAssignments: TeacherClassAssignment[];
   bio: string;
@@ -265,7 +359,61 @@ export interface Teacher {
   joinedOn: string;
   yearsExperience: number;
   highestQualification: string;
+  languagesSpoken: string[];
+  highlights: string[];
   timeline: TeacherTimelineEvent[];
+  /** Monthly gross salary the school pays this teacher */
+  monthlySalary: number;
+}
+
+/** Non-teaching school employees (office, transport, security, etc.) */
+export type StaffDepartment =
+  | "Administration"
+  | "Accounts"
+  | "Transport"
+  | "Support"
+  | "Security"
+  | "Library"
+  | "Lab";
+
+export interface StaffMember {
+  id: string;
+  name: string;
+  roleTitle: string;
+  department: StaffDepartment;
+  employeeCode: string;
+  email: string;
+  phone: string;
+  joinedOn: string;
+  avatarInitials: string;
+  status: "active" | "inactive";
+  /** Monthly gross used when creating salary lines */
+  monthlySalary: number;
+}
+
+export type StaffPersonType = "teacher" | "staff";
+
+export type SalaryStatus = "due" | "paid" | "on_hold";
+
+export type SalaryPayoutMethod = "bank_transfer" | "upi" | "cheque" | "cash";
+
+/** Monthly salary the school owes teachers & other staff (accountant pays out) */
+export interface StaffSalary {
+  id: string;
+  personType: StaffPersonType;
+  personId: string;
+  /** e.g. 2026-07 */
+  periodKey: string;
+  /** e.g. July 2026 */
+  periodLabel: string;
+  grossAmount: number;
+  deductions: number;
+  netAmount: number;
+  payBy: string;
+  status: SalaryStatus;
+  paidAt?: string;
+  payoutMethod?: SalaryPayoutMethod;
+  notes?: string;
 }
 
 export interface TeacherRating {
@@ -318,6 +466,8 @@ export interface TeacherMeeting {
   notes: string;
   status: MeetingBookingStatus;
   bookedAt: string;
+  sessionStatus?: MeetingSessionStatus;
+  lastEngagedAt?: string;
 }
 
 export interface SessionUser {

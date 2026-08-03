@@ -18,7 +18,61 @@ export default function ParentHistoryPage() {
         description="All fee transactions. Generate a receipt for any successful payment."
       />
 
-      <Surface>
+      <div className="space-y-3 md:hidden">
+        {payments.map((p) => {
+          const student = getStudent(p.studentId);
+          const receipt = state.receipts.find((r) => r.paymentId === p.id);
+          return (
+            <Surface key={p.id} className="p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="font-semibold">{student?.name}</p>
+                  <p className="mt-1 text-xs text-[var(--muted)]">{formatDateTime(p.paidAt)}</p>
+                </div>
+                <Badge tone={p.status === "success" ? "success" : "danger"}>{p.status}</Badge>
+              </div>
+              <div className="mt-3 flex items-end justify-between gap-3">
+                <div>
+                  <p className="text-lg font-bold tracking-[-0.02em]">{formatINR(p.amount)}</p>
+                  <p className="text-xs text-[var(--muted)]">
+                    {methodLabel(p.method)} · {p.transactionId}
+                  </p>
+                </div>
+                {p.status === "success" && receipt && student ? (
+                  <Button
+                    size="sm"
+                    variant="soft"
+                    onClick={() =>
+                      openFeeReceipt({
+                        school: state.school,
+                        student,
+                        receipt,
+                        payment: p,
+                        parentName: user?.name,
+                        lineItems: p.dueIds.map((dueId) => {
+                          const due = state.dues.find((d) => d.id === dueId);
+                          return {
+                            name: due?.installmentName ?? "Fee installment",
+                            amount: due ? due.amount + due.fine : 0,
+                          };
+                        }),
+                      })
+                    }
+                  >
+                    <FileText className="h-3.5 w-3.5" />
+                    Receipt
+                  </Button>
+                ) : null}
+              </div>
+            </Surface>
+          );
+        })}
+        {payments.length === 0 ? (
+          <Surface className="p-8 text-center text-sm text-[var(--muted)]">No payments yet.</Surface>
+        ) : null}
+      </div>
+
+      <Surface className="hidden md:block">
         <div className="table-wrap">
           <table className="data">
             <thead>

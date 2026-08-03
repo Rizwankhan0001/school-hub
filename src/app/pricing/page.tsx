@@ -142,7 +142,7 @@ export default function PricingPage() {
             ))}
           </div>
 
-          <div className="mt-16 grid gap-6 rounded-[1.75rem] border border-[var(--line)] bg-white/70 px-7 py-8 sm:grid-cols-[1fr_auto] sm:items-center sm:px-10">
+          <div className="mt-16 grid gap-6 rounded-[1.75rem] border border-[var(--line)] bg-white/70 px-6 py-7 sm:grid-cols-[1fr_auto] sm:items-center sm:px-10 sm:py-8">
             <div>
               <p className="font-[family-name:var(--font-display)] text-xl font-bold tracking-[-0.03em]">
                 Prefer to explore first?
@@ -153,7 +153,7 @@ export default function PricingPage() {
             </div>
             <Link
               href="/login"
-              className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl bg-[var(--ink)] px-5 text-sm font-semibold text-white transition hover:bg-[var(--ink-2)]"
+              className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-2xl bg-[var(--ink)] px-5 text-sm font-semibold text-white transition hover:bg-[var(--ink-2)] sm:w-auto"
             >
               Try the demo
               <ArrowRight className="h-4 w-4" />

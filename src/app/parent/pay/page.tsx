@@ -1,10 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CheckCircle2 } from "lucide-react";
+import { BadgePercent, CheckCircle2 } from "lucide-react";
 import { ReceiptActions } from "@/components/receipt-actions";
 import {
+  Badge,
   Button,
   Field,
   PageHeader,
@@ -12,7 +13,7 @@ import {
   Surface,
 } from "@/components/ui";
 import { useApp } from "@/lib/store";
-import { formatINR, outstanding } from "@/lib/format";
+import { computeFeePaymentBreakdown, formatINR, outstanding } from "@/lib/format";
 import type { PaymentMethod, Receipt } from "@/lib/types";
 import type { ReceiptDocumentInput } from "@/lib/receipt-document";
 
@@ -31,18 +32,82 @@ export default function ParentPayPage() {
   const [selected, setSelected] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [issuedReceipt, setIssuedReceipt] = useState<Receipt | null>(null);
+  const paymentOptions = state.feePaymentOptions ?? [];
+  const [planId, setPlanId] = useState(
+    () => paymentOptions.find((p) => p.highlight)?.id ?? paymentOptions[0]?.id ?? "",
+  );
   const router = useRouter();
 
+  const student = students.find((s) => s.id === studentId);
   const dues = useMemo(() => getOpenDues([studentId]), [getOpenDues, studentId]);
-  const amount = dues
+  const selectedPlan =
+    paymentOptions.find((p) => p.id === planId) ?? paymentOptions[0] ?? null;
+
+  const classAnnualTotal = useMemo(() => {
+    if (!student) return 0;
+    return state.feeStructures
+      .filter((f) => f.className === student.className)
+      .reduce((s, f) => s + f.amount, 0);
+  }, [state.feeStructures, student]);
+
+  // When plan or student changes, pre-select dues to match the plan intent
+  useEffect(() => {
+    if (!selectedPlan || dues.length === 0) {
+      setSelected([]);
+      return;
+    }
+    if (selectedPlan.code === "annual_full") {
+      setSelected(dues.map((d) => d.id));
+      return;
+    }
+    if (selectedPlan.code === "half_yearly") {
+      setSelected(dues.slice(0, Math.min(2, dues.length)).map((d) => d.id));
+      return;
+    }
+    // quarterly / monthly → start with the first open EMI; parent can add more
+    setSelected([dues[0].id]);
+  }, [planId, studentId, dues, selectedPlan]);
+
+  const rawAmount = dues
     .filter((d) => selected.includes(d.id))
     .reduce((s, d) => s + outstanding(d.amount, d.fine, d.paidAmount), 0);
 
+  const payingAllOpen =
+    dues.length > 0 && selected.length === dues.length && selected.every((id) => dues.some((d) => d.id === id));
+
+  const breakdown = selectedPlan
+    ? computeFeePaymentBreakdown(
+        selectedPlan.code === "annual_full" && classAnnualTotal > 0
+          ? classAnnualTotal
+          : rawAmount,
+        selectedPlan,
+      )
+    : null;
+
+  // Apply plan pricing when paying all open dues under annual, or when using EMI surcharge on selected amount
+  const amount = (() => {
+    if (!selectedPlan || rawAmount <= 0) return 0;
+    if (selectedPlan.code === "annual_full" && payingAllOpen) {
+      // Discount on outstanding open dues (demo-friendly)
+      return Math.round(rawAmount * (1 - selectedPlan.discountPercent / 100));
+    }
+    if (selectedPlan.surchargePercent > 0) {
+      return Math.round(rawAmount * (1 + selectedPlan.surchargePercent / 100));
+    }
+    if (selectedPlan.discountPercent > 0 && payingAllOpen) {
+      return Math.round(rawAmount * (1 - selectedPlan.discountPercent / 100));
+    }
+    return rawAmount;
+  })();
+
+  const savings = rawAmount > amount ? rawAmount - amount : 0;
+  const extra = amount > rawAmount ? amount - rawAmount : 0;
+
   const receiptDocument = useMemo((): ReceiptDocumentInput | null => {
     if (!issuedReceipt) return null;
-    const student = getStudent(issuedReceipt.studentId);
+    const stu = getStudent(issuedReceipt.studentId);
     const payment = state.payments.find((p) => p.id === issuedReceipt.paymentId);
-    if (!student || !payment) return null;
+    if (!stu || !payment) return null;
     const lineItems = payment.dueIds.map((dueId) => {
       const due = state.dues.find((d) => d.id === dueId);
       return {
@@ -52,7 +117,7 @@ export default function ParentPayPage() {
     });
     return {
       school: state.school,
-      student,
+      student: stu,
       receipt: issuedReceipt,
       payment,
       parentName: user?.name,
@@ -64,16 +129,15 @@ export default function ParentPayPage() {
     <div className="animate-rise">
       <PageHeader
         title="Pay fees"
-        description="Select dues and complete payment. A fee receipt is ready to generate right after payment."
+        description="Choose a payment plan (one-time discount or EMI), select dues, and pay securely."
       />
 
-      <Surface className="mx-auto max-w-2xl p-6">
+      <Surface className="mx-auto max-w-2xl p-5 sm:p-6">
         <Field label="Child">
           <Select
             value={studentId}
             onChange={(e) => {
               setStudentId(e.target.value);
-              setSelected([]);
               setIssuedReceipt(null);
             }}
           >
@@ -85,8 +149,83 @@ export default function ParentPayPage() {
           </Select>
         </Field>
 
+        {paymentOptions.length > 0 ? (
+          <div className="mt-5">
+            <p className="text-sm font-medium">Choose how you want to pay</p>
+            <p className="mt-1 text-xs text-[var(--muted)]">
+              Tap a plan — pay in full for a discount, or pick an EMI style for smaller parts.
+            </p>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              {paymentOptions.map((opt) => {
+                const active = selectedPlan?.id === opt.id;
+                const preview = computeFeePaymentBreakdown(
+                  classAnnualTotal || rawAmount || 0,
+                  opt,
+                );
+                return (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => {
+                      setPlanId(opt.id);
+                      setIssuedReceipt(null);
+                    }}
+                    className={`rounded-2xl border p-3.5 text-left transition ${
+                      active
+                        ? "border-[var(--accent)] bg-[var(--accent-soft)] ring-2 ring-[var(--accent)]/30"
+                        : "border-[var(--line)] bg-white hover:border-[var(--line-strong)]"
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <p className="font-semibold tracking-[-0.02em]">{opt.name}</p>
+                        <p className="mt-0.5 text-xs text-[var(--muted)]">{opt.tagline}</p>
+                      </div>
+                      {active ? <Badge tone="accent">Selected</Badge> : null}
+                      {!active && opt.highlight ? <Badge tone="success">Best</Badge> : null}
+                    </div>
+                    <p className="mt-2 text-xs leading-relaxed text-[var(--ink-2)]">
+                      {opt.description}
+                    </p>
+                    <p className="mt-2 text-xs font-semibold text-[var(--ink)]">
+                      {opt.discountPercent > 0 ? (
+                        <span className="inline-flex items-center gap-1 text-[var(--success)]">
+                          <BadgePercent className="h-3.5 w-3.5" />
+                          {opt.discountPercent}% off
+                        </span>
+                      ) : opt.surchargePercent > 0 ? (
+                        <span>+{opt.surchargePercent}% convenience</span>
+                      ) : (
+                        <span>No extra charge</span>
+                      )}
+                      <span className="text-[var(--muted)]">
+                        {" "}
+                        ·{" "}
+                        {opt.installments === 1
+                          ? `~${formatINR(preview.payable)}`
+                          : `${opt.installments} × ~${formatINR(preview.perInstallment)}`}
+                      </span>
+                    </p>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ) : null}
+
         <div className="mt-5 space-y-2">
-          <p className="text-sm font-medium">Outstanding installments</p>
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-sm font-medium">Outstanding installments</p>
+            {dues.length > 0 ? (
+              <button
+                type="button"
+                className="text-xs font-semibold text-[var(--accent)] hover:underline"
+                onClick={() => setSelected(dues.map((d) => d.id))}
+              >
+                Select all
+              </button>
+            ) : null}
+          </div>
           {dues.length === 0 ? (
             <p className="rounded-xl bg-[var(--ink-soft)] px-4 py-6 text-sm text-[var(--muted)]">
               No dues pending for this student.
@@ -141,7 +280,40 @@ export default function ParentPayPage() {
           </Field>
         </div>
 
-        <div className="mt-6 flex items-center justify-between rounded-2xl bg-[var(--ink)] px-5 py-4 text-white">
+        {selectedPlan && rawAmount > 0 ? (
+          <div className="mt-4 rounded-2xl bg-[var(--bg)] px-4 py-3 text-sm">
+            <p className="font-semibold">{selectedPlan.name} summary</p>
+            <p className="mt-1 text-[var(--muted)]">
+              Selected dues: {formatINR(rawAmount)}
+              {savings > 0 ? (
+                <span className="text-[var(--success)]">
+                  {" "}
+                  · you save {formatINR(savings)}
+                </span>
+              ) : null}
+              {extra > 0 ? (
+                <span className="text-[var(--muted)]">
+                  {" "}
+                  · includes {formatINR(extra)} convenience fee
+                </span>
+              ) : null}
+            </p>
+            {selectedPlan.code === "annual_full" && !payingAllOpen ? (
+              <p className="mt-1 text-xs text-[var(--accent-hover)]">
+                Select all open dues to unlock the {selectedPlan.discountPercent}% full-payment
+                discount.
+              </p>
+            ) : null}
+            {breakdown && classAnnualTotal > 0 && selectedPlan.code === "annual_full" ? (
+              <p className="mt-1 text-xs text-[var(--muted)]">
+                Full-year structure for {student?.className}: {formatINR(classAnnualTotal)} →{" "}
+                {formatINR(breakdown.payable)} after plan pricing.
+              </p>
+            ) : null}
+          </div>
+        ) : null}
+
+        <div className="mt-6 flex flex-col gap-4 rounded-2xl bg-[var(--ink)] px-4 py-4 text-white sm:flex-row sm:items-center sm:justify-between sm:px-5">
           <div>
             <p className="text-xs uppercase tracking-[0.14em] text-white/60">Payable</p>
             <p className="font-[family-name:var(--font-display)] text-3xl">
@@ -149,6 +321,7 @@ export default function ParentPayPage() {
             </p>
           </div>
           <Button
+            className="w-full sm:w-auto"
             disabled={amount <= 0 || busy}
             onClick={() => {
               setBusy(true);

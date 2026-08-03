@@ -5,8 +5,12 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import {
   ArrowLeft,
+  BookOpen,
   Download,
+  Languages,
+  MapPin,
   Printer,
+  Sparkles,
   Star,
   Trophy,
 } from "lucide-react";
@@ -31,6 +35,13 @@ const KIND_TONE: Record<string, "info" | "accent" | "success" | "warning"> = {
   career: "accent",
   certification: "success",
   award: "warning",
+};
+
+const DEPT_GRADIENT: Record<string, string> = {
+  Primary: "from-[rgba(0,166,126,0.22)] via-[rgba(0,166,126,0.08)] to-transparent",
+  Middle: "from-[rgba(36,91,255,0.2)] via-[rgba(36,91,255,0.06)] to-transparent",
+  Senior: "from-[rgba(10,12,16,0.14)] via-[rgba(0,166,126,0.1)] to-transparent",
+  Specialist: "from-[rgba(212,146,48,0.2)] via-[rgba(212,146,48,0.06)] to-transparent",
 };
 
 export default function AdminTeacherDetailPage() {
@@ -121,6 +132,7 @@ export default function AdminTeacherDetailPage() {
   }
 
   const timeline = [...teacher.timeline].sort((a, b) => a.year.localeCompare(b.year));
+  const department = teacher.department ?? "Specialist";
 
   return (
     <div className="animate-rise">
@@ -133,83 +145,126 @@ export default function AdminTeacherDetailPage() {
         </Link>
       </div>
 
-      <PageHeader
-        title={teacher.name}
-        description={`${teacher.subject} · ${teacher.specialty} · ${teacher.room}`}
-        actions={
-          <div className="flex flex-wrap gap-2">
-            <Button
-              variant="soft"
-              onClick={() => profileDoc && downloadTeacherProfile(profileDoc)}
-            >
-              <Download className="h-4 w-4" /> Download profile
-            </Button>
-            <Button
-              variant="ghost"
-              onClick={() => profileDoc && openTeacherProfile(profileDoc, true)}
-            >
-              <Printer className="h-4 w-4" /> Print / PDF
-            </Button>
-          </div>
-        }
-      />
-
-      <div className="grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
-        <div className="space-y-4">
-          <Surface className="p-5">
+      <Surface className={`mb-6 overflow-hidden bg-gradient-to-br ${DEPT_GRADIENT[department]} p-0`}>
+        <div className="p-5 sm:p-7">
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
             <div className="flex items-start gap-4">
-              <span className="grid h-16 w-16 shrink-0 place-items-center rounded-[1.25rem] bg-[var(--accent)] text-lg font-bold text-white">
+              <span className="grid h-16 w-16 shrink-0 place-items-center rounded-[1.25rem] bg-[var(--ink)] text-lg font-bold text-white shadow-[0_18px_36px_-20px_rgba(10,12,16,0.65)]">
                 {teacher.avatarInitials}
               </span>
               <div>
                 <div className="flex flex-wrap gap-2">
                   {isThisYearWinner ? <Badge tone="accent">Teacher of the Year</Badge> : null}
-                  <Badge tone="neutral">{teacher.yearsExperience} yrs experience</Badge>
+                  <Badge tone="neutral">{department}</Badge>
+                  <Badge tone="info">{teacher.yearsExperience} yrs experience</Badge>
                 </div>
-                <p className="mt-3 text-sm leading-relaxed text-[var(--ink-2)]">{teacher.bio}</p>
-                <div className="mt-4 grid gap-3 sm:grid-cols-2 text-sm">
-                  <div>
-                    <p className="text-xs text-[var(--muted)]">Qualification</p>
-                    <p className="font-semibold">{teacher.highestQualification}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-[var(--muted)]">Joined</p>
-                    <p className="font-semibold">{formatDate(teacher.joinedOn)}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-[var(--muted)]">Email</p>
-                    <p className="font-semibold">{teacher.email}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-[var(--muted)]">Phone</p>
-                    <p className="font-semibold">{teacher.phone}</p>
-                  </div>
-                </div>
+                <h1 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-bold tracking-[-0.04em] sm:text-4xl">
+                  {teacher.name}
+                </h1>
+                <p className="mt-1 text-sm text-[var(--muted)] sm:text-base">
+                  {teacher.subject} · {teacher.specialty}
+                </p>
+                <p className="mt-3 max-w-2xl text-sm leading-relaxed text-[var(--ink-2)]">
+                  {teacher.bio}
+                </p>
               </div>
             </div>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="soft"
+                onClick={() => profileDoc && downloadTeacherProfile(profileDoc)}
+              >
+                <Download className="h-4 w-4" /> Download
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={() => profileDoc && openTeacherProfile(profileDoc, true)}
+              >
+                <Printer className="h-4 w-4" /> Print / PDF
+              </Button>
+            </div>
+          </div>
+        </div>
+      </Surface>
+
+      <div className="grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
+        <div className="space-y-4">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Surface className="p-4">
+              <p className="text-xs text-[var(--muted)]">Qualification</p>
+              <p className="mt-1 font-semibold">{teacher.highestQualification}</p>
+            </Surface>
+            <Surface className="p-4">
+              <p className="text-xs text-[var(--muted)]">Joined</p>
+              <p className="mt-1 font-semibold">{formatDate(teacher.joinedOn)}</p>
+            </Surface>
+            <Surface className="p-4">
+              <p className="text-xs text-[var(--muted)]">Email</p>
+              <p className="mt-1 break-all font-semibold">{teacher.email}</p>
+            </Surface>
+            <Surface className="p-4">
+              <p className="text-xs text-[var(--muted)]">Phone</p>
+              <p className="mt-1 font-semibold">{teacher.phone}</p>
+            </Surface>
+          </div>
+
+          <Surface className="p-5">
+            <div className="flex flex-wrap gap-4 text-sm text-[var(--muted)]">
+              <span className="inline-flex items-center gap-1.5">
+                <MapPin className="h-4 w-4 text-[var(--accent)]" /> {teacher.room}
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <Languages className="h-4 w-4 text-[var(--accent)]" />{" "}
+                {(teacher.languagesSpoken ?? []).join(", ") || "—"}
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <BookOpen className="h-4 w-4 text-[var(--accent)]" />{" "}
+                {teacher.classes.join(", ")}
+              </span>
+            </div>
+
+            {(teacher.highlights?.length ?? 0) > 0 ? (
+              <div className="mt-4 flex flex-wrap gap-2">
+                {teacher.highlights.map((h) => (
+                  <span
+                    key={h}
+                    className="inline-flex items-center gap-1.5 rounded-xl bg-[var(--accent-soft)] px-3 py-1.5 text-xs font-semibold text-[var(--accent-hover)]"
+                  >
+                    <Sparkles className="h-3.5 w-3.5" />
+                    {h}
+                  </span>
+                ))}
+              </div>
+            ) : null}
           </Surface>
 
           <Surface className="p-5">
             <h2 className="text-base font-semibold tracking-[-0.01em]">Class-wise subjects</h2>
+            <p className="mt-1 text-sm text-[var(--muted)]">
+              Teaching load across {teacher.classes.length} class band
+              {teacher.classes.length === 1 ? "" : "s"}.
+            </p>
             <div className="mt-4 overflow-hidden rounded-2xl border border-[var(--line)]">
-              <table className="data">
-                <thead>
-                  <tr>
-                    <th>Class</th>
-                    <th>Section</th>
-                    <th>Subject</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {teacher.classAssignments.map((a, i) => (
-                    <tr key={`${a.className}-${a.subject}-${i}`}>
-                      <td className="font-medium">{a.className}</td>
-                      <td>{a.section ?? "—"}</td>
-                      <td>{a.subject}</td>
+              <div className="table-wrap">
+                <table className="data">
+                  <thead>
+                    <tr>
+                      <th>Class</th>
+                      <th>Section</th>
+                      <th>Subject</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {teacher.classAssignments.map((a, i) => (
+                      <tr key={`${a.className}-${a.subject}-${i}`}>
+                        <td className="font-medium">{a.className}</td>
+                        <td>{a.section ?? "—"}</td>
+                        <td>{a.subject}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </Surface>
 

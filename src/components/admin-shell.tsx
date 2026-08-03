@@ -7,6 +7,7 @@ import {
   Award,
   Bell,
   Bot,
+  Briefcase,
   Cable,
   CalendarRange,
   ChartColumnIncreasing,
@@ -26,24 +27,43 @@ import {
 import { useApp } from "@/lib/store";
 import { cn, roleLabel } from "@/lib/format";
 import { Button } from "@/components/ui";
+import type { Role } from "@/lib/types";
 
-const allNav = [
+type NavItem = {
+  href: string;
+  label: string;
+  icon: typeof LayoutDashboard;
+  roles: Role[];
+};
+
+/** Keep accountant on money workflows only. */
+const allNav: NavItem[] = [
   { href: "/admin", label: "Home", icon: LayoutDashboard, roles: ["school_admin", "accountant", "support_agent"] },
-  { href: "/admin/students", label: "Students", icon: Users, roles: ["school_admin", "accountant"] },
-  { href: "/admin/teachers", label: "Teachers", icon: GraduationCap, roles: ["school_admin", "accountant", "support_agent"] },
-  { href: "/admin/fees", label: "Fee plans", icon: Wallet, roles: ["school_admin", "accountant"] },
-  { href: "/admin/installments", label: "Installments", icon: CalendarRange, roles: ["school_admin", "accountant"] },
-  { href: "/admin/scholarships", label: "Scholarships", icon: Award, roles: ["school_admin"] },
-  { href: "/admin/fines", label: "Late fees", icon: Percent, roles: ["school_admin", "accountant"] },
+  { href: "/admin/students", label: "Students", icon: Users, roles: ["school_admin"] },
+  { href: "/admin/teachers", label: "Teachers", icon: GraduationCap, roles: ["school_admin", "support_agent"] },
   { href: "/admin/dues", label: "Who owes", icon: Bell, roles: ["school_admin", "accountant", "support_agent"] },
   { href: "/admin/payments", label: "Payments", icon: CreditCard, roles: ["school_admin", "accountant"] },
   { href: "/admin/receipts", label: "Receipts", icon: Receipt, roles: ["school_admin", "accountant", "support_agent"] },
+  { href: "/admin/staff-fees", label: "Payroll", icon: Briefcase, roles: ["school_admin", "accountant"] },
+  { href: "/admin/fines", label: "Late fees", icon: Percent, roles: ["school_admin", "accountant"] },
+  { href: "/admin/fees", label: "Fee plans", icon: Wallet, roles: ["school_admin", "accountant"] },
+  { href: "/admin/installments", label: "Installments", icon: CalendarRange, roles: ["school_admin", "accountant"] },
+  { href: "/admin/scholarships", label: "Scholarships", icon: Award, roles: ["school_admin", "accountant"] },
   { href: "/admin/gateways", label: "Payment apps", icon: Cable, roles: ["school_admin"] },
   { href: "/admin/communications", label: "Messages", icon: MessageSquare, roles: ["school_admin", "support_agent"] },
   { href: "/admin/ai-collection", label: "AI video & nudges", icon: Bot, roles: ["school_admin"] },
   { href: "/admin/support", label: "Help desk", icon: Headphones, roles: ["school_admin", "support_agent"] },
   { href: "/admin/reports", label: "Reports", icon: ChartColumnIncreasing, roles: ["school_admin", "accountant"] },
 ];
+
+function pathAllowed(pathname: string, nav: NavItem[]) {
+  if (pathname === "/admin") return true;
+  return nav.some(
+    (item) =>
+      item.href !== "/admin" &&
+      (pathname === item.href || pathname.startsWith(`${item.href}/`)),
+  );
+}
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
   const { user, ready, logout, state } = useApp();
@@ -69,6 +89,18 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     [user],
   );
 
+  const isAccountant = user?.role === "accountant";
+
+  useEffect(() => {
+    if (!ready || !user) return;
+    if (user.role === "parent" || user.role === "student" || user.role === "super_admin") {
+      return;
+    }
+    if (!pathAllowed(pathname, nav)) {
+      router.replace("/admin");
+    }
+  }, [ready, user, pathname, nav, router]);
+
   function handleLogout() {
     setOpen(false);
     logout();
@@ -82,6 +114,10 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     user.role === "student" ||
     user.role === "super_admin"
   ) {
+    return <div className="min-h-screen bg-[var(--bg)]" />;
+  }
+
+  if (!pathAllowed(pathname, nav)) {
     return <div className="min-h-screen bg-[var(--bg)]" />;
   }
 
@@ -128,7 +164,9 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
               <p className="font-[family-name:var(--font-display)] text-lg font-bold tracking-[-0.04em]">
                 EduFee360
               </p>
-              <p className="mt-1 text-xs text-white/40">School workspace</p>
+              <p className="mt-1 text-xs text-white/40">
+                {isAccountant ? "Finance workspace" : "School workspace"}
+              </p>
             </div>
           </div>
         </div>
@@ -137,7 +175,9 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           <div className="mb-3 rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-3">
             <p className="text-sm font-semibold">{state.school.name}</p>
             <p className="mt-1 text-xs capitalize text-white/40">
-              {state.school.plan} · {state.school.academicSession}
+              {isAccountant
+                ? `Accountant · ${state.school.academicSession}`
+                : `${state.school.plan} · ${state.school.academicSession}`}
             </p>
           </div>
           <Button
@@ -179,7 +219,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
             </div>
             <div className="flex items-center gap-2">
               <span className="hidden rounded-full border border-[var(--line)] bg-white/80 px-3 py-1.5 text-xs font-semibold text-[var(--muted)] md:inline-flex">
-                {state.school.name}
+                {isAccountant ? "Finance desk" : state.school.name}
               </span>
               <Button variant="soft" size="sm" onClick={handleLogout}>
                 <LogOut className="h-4 w-4" />
@@ -199,7 +239,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
             onClick={() => setOpen(false)}
             aria-label="Close menu"
           />
-          <div className="absolute inset-y-0 left-0 flex w-[280px] flex-col bg-[var(--sidebar)] text-white">
+          <div className="absolute inset-y-0 left-0 flex w-[min(100%,300px)] flex-col bg-[var(--sidebar)] text-white">
             <div className="flex items-center justify-between px-4 py-4">
               <span className="font-[family-name:var(--font-display)] text-lg font-bold">
                 EduFee360

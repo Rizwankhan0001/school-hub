@@ -129,16 +129,22 @@ export function PageHeader({
   actions?: ReactNode;
 }) {
   return (
-    <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-      <div className="max-w-2xl">
-        <h1 className="font-[family-name:var(--font-display)] text-[2rem] font-bold leading-[1.1] tracking-[-0.04em] text-[var(--ink)] sm:text-[2.4rem]">
+    <div className="mb-6 flex flex-col gap-4 sm:mb-8 sm:flex-row sm:items-end sm:justify-between">
+      <div className="min-w-0 max-w-2xl">
+        <h1 className="font-[family-name:var(--font-display)] text-[1.65rem] font-bold leading-[1.1] tracking-[-0.04em] text-[var(--ink)] sm:text-[2.4rem]">
           {title}
         </h1>
         {description ? (
-          <p className="mt-2 text-[0.98rem] leading-relaxed text-[var(--muted)]">{description}</p>
+          <p className="mt-2 text-sm leading-relaxed text-[var(--muted)] sm:text-[0.98rem]">
+            {description}
+          </p>
         ) : null}
       </div>
-      {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
+      {actions ? (
+        <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
+          {actions}
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -164,11 +170,11 @@ export function Stat({
   tone?: "default" | "danger" | "success" | "accent";
 }) {
   return (
-    <div className="rounded-[var(--radius-lg)] border border-[var(--line)] bg-white p-5">
+    <div className="rounded-[var(--radius-lg)] border border-[var(--line)] bg-white p-4 sm:p-5">
       <p className="plain-label">{label}</p>
       <p
         className={cn(
-          "mt-3 font-[family-name:var(--font-display)] text-[1.85rem] font-bold leading-none tracking-[-0.04em]",
+          "mt-3 break-words font-[family-name:var(--font-display)] text-[1.55rem] font-bold leading-none tracking-[-0.04em] sm:text-[1.85rem]",
           tone === "danger" && "text-[var(--danger)]",
           tone === "success" && "text-[var(--success)]",
           tone === "accent" && "text-[var(--accent-2)]",

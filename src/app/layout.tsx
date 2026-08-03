@@ -21,6 +21,12 @@ export const metadata: Metadata = {
     "Collect school fees online, track dues, send reminders, and issue receipts — simple for schools and parents.",
 };
 
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover" as const,
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
