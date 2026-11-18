@@ -37,7 +37,7 @@ import {
   formatINR,
   planLabel,
 } from "@/lib/format";
-import type { FeeType } from "@/lib/types";
+import type { FeeStructureItem, FeeType } from "@/lib/types";
 
 const FEE_TYPES: FeeType[] = [
   "Admission Fee",
@@ -120,7 +120,7 @@ export default function FeesPage() {
     null;
 
   const classTotals = useMemo(() => {
-    const map = new Map<string, { total: number; count: number; items: typeof state.feeStructures }>();
+    const map = new Map<string, { total: number; count: number; items: FeeStructureItem[] }>();
     for (const f of state.feeStructures) {
       const entry = map.get(f.className) ?? { total: 0, count: 0, items: [] };
       entry.total += f.amount;
