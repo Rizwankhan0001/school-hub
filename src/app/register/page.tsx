@@ -36,9 +36,6 @@ function RegisterInner() {
   const [parentPhone, setParentPhone] = useState("+91 98765 43210");
   const [parentPassword, setParentPassword] = useState("");
 
-  useEffect(() => {
-    setType(initialType);
-  }, [initialType]);
 
   useEffect(() => {
     if (!ready || !user) return;
