@@ -18,7 +18,7 @@ export const GENTLE_TEMPLATES = [
   },
   {
     event: "Soft Due Note",
-    build: (parent: string, student: string, amount: string, school: string) =>
+    build: (parent: string, student: string, amount: string, _school: string) =>
       `Hello ${parent}, hoping you’re well. A small reminder: ${amount} remains for ${student}. Pay securely online whenever you’re ready.`,
   },
   {
