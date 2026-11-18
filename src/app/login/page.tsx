@@ -66,13 +66,13 @@ const copy: Record<
   },
 };
 
-function roleIcon(role: Role) {
-  if (role === "accountant") return Calculator;
-  if (role === "parent") return Users;
-  if (role === "support_agent") return Headphones;
-  if (role === "super_admin") return Shield;
-  if (role === "school_admin") return Building2;
-  return GraduationCap;
+function roleIcon(role: Role, className: string) {
+  if (role === "accountant") return <Calculator className={className} />;
+  if (role === "parent") return <Users className={className} />;
+  if (role === "support_agent") return <Headphones className={className} />;
+  if (role === "super_admin") return <Shield className={className} />;
+  if (role === "school_admin") return <Building2 className={className} />;
+  return <GraduationCap className={className} />;
 }
 
 function routeFor(user: SessionUser) {
@@ -91,7 +91,6 @@ function RoleCard({
   onPick: () => void;
 }) {
   const meta = copy[user.role];
-  const Icon = roleIcon(user.role);
 
   return (
     <button
@@ -107,7 +106,7 @@ function RoleCard({
             big ? "h-12 w-12" : "h-10 w-10"
           }`}
         >
-          <Icon className={big ? "h-5 w-5" : "h-4 w-4"} />
+          {roleIcon(user.role, big ? "h-5 w-5" : "h-4 w-4")}
         </span>
         <span className="min-w-0 flex-1">
           <span className="flex flex-wrap items-center gap-2">
@@ -178,9 +177,6 @@ function LoginInner() {
     return source.filter((u) => !PRIMARY_ROLES.includes(u.role) && !u.createdAt);
   }, [accounts]);
 
-  useEffect(() => {
-    if (preferred === "parent") setAuthTab("parent");
-  }, [preferred]);
 
   useEffect(() => {
     if (!ready || !user) return;
