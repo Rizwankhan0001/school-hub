@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { BadgePercent, CheckCircle2 } from "lucide-react";
 import { ReceiptActions } from "@/components/receipt-actions";
@@ -24,49 +24,41 @@ const METHODS: { value: PaymentMethod; label: string }[] = [
   { value: "wallet", label: "Wallet" },
 ];
 
+function selectionForPlan(dues: { id: string }[], code?: string) {
+  if (!code || dues.length === 0) return [];
+  if (code === "annual_full") return dues.map((d) => d.id);
+  if (code === "half_yearly") {
+    return dues.slice(0, Math.min(2, dues.length)).map((d) => d.id);
+  }
+  return [dues[0].id];
+}
+
 export default function ParentPayPage() {
   const { user, getParentStudents, getOpenDues, recordPayment, state, getStudent } = useApp();
   const students = getParentStudents(user?.parentId ?? "");
-  const [studentId, setStudentId] = useState(students[0]?.id ?? "");
+  const paymentOptions = state.feePaymentOptions ?? [];
+  const initialStudentId = students[0]?.id ?? "";
+  const initialPlan = paymentOptions.find((p) => p.highlight) ?? paymentOptions[0] ?? null;
+  const [studentId, setStudentId] = useState(initialStudentId);
   const [method, setMethod] = useState<PaymentMethod>("upi");
-  const [selected, setSelected] = useState<string[]>([]);
+  const [selected, setSelected] = useState<string[]>(() =>
+    selectionForPlan(getOpenDues([initialStudentId]), initialPlan?.code),
+  );
   const [busy, setBusy] = useState(false);
   const [issuedReceipt, setIssuedReceipt] = useState<Receipt | null>(null);
-  const paymentOptions = state.feePaymentOptions ?? [];
-  const [planId, setPlanId] = useState(
-    () => paymentOptions.find((p) => p.highlight)?.id ?? paymentOptions[0]?.id ?? "",
-  );
+  const [planId, setPlanId] = useState(() => initialPlan?.id ?? "");
   const router = useRouter();
 
   const student = students.find((s) => s.id === studentId);
-  const dues = useMemo(() => getOpenDues([studentId]), [getOpenDues, studentId]);
+  const dues = getOpenDues([studentId]);
   const selectedPlan =
     paymentOptions.find((p) => p.id === planId) ?? paymentOptions[0] ?? null;
 
-  const classAnnualTotal = useMemo(() => {
-    if (!student) return 0;
-    return state.feeStructures
-      .filter((f) => f.className === student.className)
-      .reduce((s, f) => s + f.amount, 0);
-  }, [state.feeStructures, student]);
-
-  // When plan or student changes, pre-select dues to match the plan intent
-  useEffect(() => {
-    if (!selectedPlan || dues.length === 0) {
-      setSelected([]);
-      return;
-    }
-    if (selectedPlan.code === "annual_full") {
-      setSelected(dues.map((d) => d.id));
-      return;
-    }
-    if (selectedPlan.code === "half_yearly") {
-      setSelected(dues.slice(0, Math.min(2, dues.length)).map((d) => d.id));
-      return;
-    }
-    // quarterly / monthly → start with the first open EMI; parent can add more
-    setSelected([dues[0].id]);
-  }, [planId, studentId, dues, selectedPlan]);
+  const classAnnualTotal = student
+    ? state.feeStructures
+        .filter((f) => f.className === student.className)
+        .reduce((s, f) => s + f.amount, 0)
+    : 0;
 
   const rawAmount = dues
     .filter((d) => selected.includes(d.id))
@@ -137,7 +129,9 @@ export default function ParentPayPage() {
           <Select
             value={studentId}
             onChange={(e) => {
-              setStudentId(e.target.value);
+              const nextStudentId = e.target.value;
+              setStudentId(nextStudentId);
+              setSelected(selectionForPlan(getOpenDues([nextStudentId]), selectedPlan?.code));
               setIssuedReceipt(null);
             }}
           >
@@ -168,6 +162,7 @@ export default function ParentPayPage() {
                     type="button"
                     onClick={() => {
                       setPlanId(opt.id);
+                      setSelected(selectionForPlan(dues, opt.code));
                       setIssuedReceipt(null);
                     }}
                     className={`rounded-2xl border p-3.5 text-left transition ${
