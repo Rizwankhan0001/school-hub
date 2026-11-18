@@ -20,7 +20,10 @@ const GENTLE_EVENTS = new Set([
 
 export default function ParentNotificationsPage() {
   const { user, getParentStudents, state, updateAICallStatus } = useApp();
-  const ids = new Set(getParentStudents(user?.parentId ?? "").map((s) => s.id));
+  const ids = useMemo(
+    () => new Set(getParentStudents(user?.parentId ?? "").map((s) => s.id)),
+    [getParentStudents, user?.parentId],
+  );
   const logs = state.communications.filter(
     (c) => c.studentId && ids.has(c.studentId),
   );
