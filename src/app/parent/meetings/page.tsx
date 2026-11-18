@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   CalendarClock,
   CheckCircle2,
@@ -120,33 +120,20 @@ export default function ParentMeetingsPage() {
   const selectedStudent = students.find((s) => s.id === studentId) ?? students[0];
   const childClass = selectedStudent?.className ?? "";
 
-  const relevantTeachers = useMemo(() => {
-    if (!childClass) return [];
-    return state.teachers.filter((t) => teacherTeachesClass(t, childClass));
-  }, [state.teachers, childClass]);
-
-  useEffect(() => {
-    if (!relevantTeachers.length) {
-      setTeacherId("");
-      setSelectedDate("");
-      setSlotId("");
-      return;
-    }
-    if (!relevantTeachers.some((t) => t.id === teacherId)) {
-      setTeacherId(relevantTeachers[0].id);
-      setSelectedDate("");
-      setSlotId("");
-    }
-  }, [relevantTeachers, teacherId]);
-
-  const teacher = relevantTeachers.find((t) => t.id === teacherId);
+  const relevantTeachers = childClass
+    ? state.teachers.filter((t) => teacherTeachesClass(t, childClass))
+    : [];
+  const activeTeacherId = relevantTeachers.some((t) => t.id === teacherId)
+    ? teacherId
+    : relevantTeachers[0]?.id ?? "";
+  const teacher = relevantTeachers.find((t) => t.id === activeTeacherId);
 
   const openSlots = useMemo(
     () =>
       state.teacherSlots
-        .filter((s) => s.teacherId === teacherId && s.status === "open")
+        .filter((s) => s.teacherId === activeTeacherId && s.status === "open")
         .sort((a, b) => a.startAt.localeCompare(b.startAt)),
-    [state.teacherSlots, teacherId],
+    [state.teacherSlots, activeTeacherId],
   );
 
   const dates = useMemo(() => {
@@ -321,6 +308,7 @@ export default function ParentMeetingsPage() {
             value={studentId}
             onChange={(e) => {
               setStudentId(e.target.value);
+              setTeacherId("");
               setError(null);
               setMessage(null);
               setSelectedDate("");
@@ -356,7 +344,7 @@ export default function ParentMeetingsPage() {
                 const openCount = state.teacherSlots.filter(
                   (s) => s.teacherId === t.id && s.status === "open",
                 ).length;
-                const active = t.id === teacherId;
+                const active = t.id === activeTeacherId;
                 const subjects = subjectsForClass(t, childClass);
                 return (
                   <button
@@ -420,9 +408,9 @@ export default function ParentMeetingsPage() {
               : "Select a teacher to see open times."}
           </p>
 
-          {!teacherId || dates.length === 0 ? (
+          {!activeTeacherId || dates.length === 0 ? (
             <p className="mt-6 rounded-2xl bg-[var(--surface-muted)] px-4 py-8 text-center text-sm text-[var(--muted)]">
-              {!teacherId
+              {!activeTeacherId
                 ? "Choose a teacher for your child’s class first."
                 : "No open slots for this teacher right now. Try another teacher."}
             </p>
