@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import {
   CalendarClock,
   CheckCircle2,
@@ -128,37 +128,21 @@ export default function ParentMeetingsPage() {
     : relevantTeachers[0]?.id ?? "";
   const teacher = relevantTeachers.find((t) => t.id === activeTeacherId);
 
-  const openSlots = useMemo(
-    () =>
-      state.teacherSlots
-        .filter((s) => s.teacherId === activeTeacherId && s.status === "open")
-        .sort((a, b) => a.startAt.localeCompare(b.startAt)),
-    [state.teacherSlots, activeTeacherId],
-  );
+  const openSlots = state.teacherSlots
+    .filter((s) => s.teacherId === activeTeacherId && s.status === "open")
+    .sort((a, b) => a.startAt.localeCompare(b.startAt));
 
-  const dates = useMemo(() => {
-    const keys = Array.from(new Set(openSlots.map((s) => slotDateKey(s.startAt))));
-    return keys;
-  }, [openSlots]);
-
+  const dates = Array.from(new Set(openSlots.map((s) => slotDateKey(s.startAt))));
   const activeDate = selectedDate && dates.includes(selectedDate) ? selectedDate : dates[0] ?? "";
+  const daySlots = openSlots.filter((s) => slotDateKey(s.startAt) === activeDate);
 
-  const daySlots = useMemo(
-    () => openSlots.filter((s) => slotDateKey(s.startAt) === activeDate),
-    [openSlots, activeDate],
-  );
-
-  const myMeetings = useMemo(
-    () =>
-      state.teacherMeetings
-        .filter((m) => m.parentId === user?.parentId && m.status === "booked")
-        .sort((a, b) => {
-          const sa = state.teacherSlots.find((s) => s.id === a.slotId)?.startAt ?? "";
-          const sb = state.teacherSlots.find((s) => s.id === b.slotId)?.startAt ?? "";
-          return sa.localeCompare(sb);
-        }),
-    [state.teacherMeetings, state.teacherSlots, user?.parentId],
-  );
+  const myMeetings = state.teacherMeetings
+    .filter((m) => m.parentId === user?.parentId && m.status === "booked")
+    .sort((a, b) => {
+      const sa = state.teacherSlots.find((s) => s.id === a.slotId)?.startAt ?? "";
+      const sb = state.teacherSlots.find((s) => s.id === b.slotId)?.startAt ?? "";
+      return sa.localeCompare(sb);
+    });
 
   const engageMeeting = engage
     ? state.teacherMeetings.find((m) => m.id === engage.meetingId)
