@@ -539,21 +539,30 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    try {
-      const raw =
-        localStorage.getItem(STORAGE_KEY) ??
-        localStorage.getItem("edufee360_state_v2") ??
-        localStorage.getItem("edufee360_state_v1");
-      if (raw) setState(mergeState(JSON.parse(raw) as Partial<AppState>));
-      const u =
-        localStorage.getItem(USER_KEY) ??
-        localStorage.getItem("edufee360_user_v2") ??
-        localStorage.getItem("edufee360_user_v1");
-      if (u) setUser(JSON.parse(u) as SessionUser);
-    } catch {
-      /* ignore */
-    }
-    setReady(true);
+    let cancelled = false;
+
+    queueMicrotask(() => {
+      if (cancelled) return;
+      try {
+        const raw =
+          localStorage.getItem(STORAGE_KEY) ??
+          localStorage.getItem("edufee360_state_v2") ??
+          localStorage.getItem("edufee360_state_v1");
+        if (raw) setState(mergeState(JSON.parse(raw) as Partial<AppState>));
+        const u =
+          localStorage.getItem(USER_KEY) ??
+          localStorage.getItem("edufee360_user_v2") ??
+          localStorage.getItem("edufee360_user_v1");
+        if (u) setUser(JSON.parse(u) as SessionUser);
+      } catch {
+        /* ignore */
+      }
+      setReady(true);
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
