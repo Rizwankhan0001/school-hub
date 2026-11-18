@@ -9,7 +9,8 @@ permissions:
   contents: read
 
 jobs:
-  verify:
+  build:
+    name: Next.js build and TypeScript
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -20,9 +21,22 @@ jobs:
           cache: npm
       - name: Install locked dependencies
         run: npm ci
-      - name: ESLint
-        run: npm run lint
       - name: TypeScript
         run: npx tsc --noEmit
       - name: Production build
         run: npm run build
+
+  lint:
+    name: ESLint (existing issues tracked)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci
+      - name: ESLint
+        run: npm run lint
