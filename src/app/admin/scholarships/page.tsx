@@ -111,7 +111,7 @@ export default function ScholarshipsPage() {
     autoReviewScholarship,
     autoReviewPendingScholarships,
   } = useApp();
-  const programs = state.scholarshipPrograms ?? [];
+  const programs = useMemo(() => state.scholarshipPrograms ?? [], [state.scholarshipPrograms]);
   const [view, setView] = useState<View>("schemes");
   const [typeFilter, setTypeFilter] = useState<"all" | ScholarshipType>("all");
   const [selectedProgramId, setSelectedProgramId] = useState<string | null>(null);
@@ -123,8 +123,8 @@ export default function ScholarshipsPage() {
   const [reviewBanner, setReviewBanner] = useState<string | null>(null);
   const formRef = useRef<HTMLDivElement>(null);
   const [form, setForm] = useState({
-    programId: "",
-    studentId: "",
+    programId: programs[0]?.id ?? "",
+    studentId: state.students[0]?.id ?? "",
     qualifyingScore: 90,
     annualIncome: 250000,
     notes: "",
@@ -132,14 +132,6 @@ export default function ScholarshipsPage() {
     expiresOn: "2026-03-31",
   });
 
-  useEffect(() => {
-    if (!programs.length) return;
-    setForm((f) => ({
-      ...f,
-      programId: f.programId || programs[0].id,
-      studentId: f.studentId || state.students[0]?.id || "",
-    }));
-  }, [programs, state.students]);
 
   const selected =
     programs.find((p) => p.id === selectedProgramId) ?? null;
