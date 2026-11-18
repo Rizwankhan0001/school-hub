@@ -31,12 +31,8 @@ export default function ParentDashboard() {
   const firstName = user?.name.split(" ")[0] ?? "there";
   const [activeCall, setActiveCall] = useState<AICallLog | null>(null);
 
-  const myCalls = useMemo(
-    () =>
-      state.aiCalls.filter(
-        (c) => studentIds.includes(c.studentId) && c.callType === "video",
-      ),
-    [state.aiCalls, studentIds],
+  const myCalls = state.aiCalls.filter(
+    (c) => studentIds.includes(c.studentId) && c.callType === "video",
   );
   const incoming = myCalls.filter(
     (c) => c.status === "ringing" || c.status === "queued" || c.status === "in_progress",
